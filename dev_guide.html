@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taalas 芯片开发指南 · 从模型到硅片的交易系统设计</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: #0a0a1a;
+  color: #e0e0e0;
+  line-height: 1.7;
+  padding: 0;
+}
+.container { max-width: 1000px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+h1 {
+  font-size: 2.2rem;
+  font-weight: 900;
+  text-align: center;
+  background: linear-gradient(135deg, #00d4ff, #7b2ff7, #ff6b35);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+}
+.subtitle {
+  text-align: center;
+  color: #8888aa;
+  margin-bottom: 3rem;
+  font-size: 1rem;
+}
+
+/* Paradigm Shift Banner */
+.paradigm {
+  background: linear-gradient(135deg, #1a1a3e, #2a1a4e);
+  border: 2px solid #7b2ff7;
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 3rem;
+  position: relative;
+  overflow: hidden;
+}
+.paradigm::before {
+  content: '';
+  position: absolute;
+  top: -30px;
+  right: -30px;
+  width: 150px;
+  height: 150px;
+  background: radial-gradient(circle, rgba(123,47,247,0.3), transparent);
+  border-radius: 50%;
+}
+.paradigm h2 {
+  color: #c0a0ff;
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+}
+.paradigm-grid {
+  display: grid;
+  grid-template-columns: 1fr 50px 1fr;
+  gap: 1rem;
+  align-items: center;
+}
+@media (max-width: 600px) {
+  .paradigm-grid { grid-template-columns: 1fr; }
+}
+.old-way, .new-way {
+  padding: 1rem;
+  border-radius: 10px;
+}
+.old-way { background: rgba(255,80,80,0.1); border: 1px solid rgba(255,80,80,0.3); }
+.new-way { background: rgba(0,255,136,0.1); border: 1px solid rgba(0,255,136,0.3); }
+.old-way h4 { color: #ff6666; margin-bottom: 0.5rem; }
+.new-way h4 { color: #00ff88; margin-bottom: 0.5rem; }
+.paradigm-arrow {
+  text-align: center;
+  font-size: 2rem;
+  color: #7b2ff7;
+}
+.paradigm-list { font-size: 0.85rem; color: #aaa; line-height: 1.8; }
+.paradigm-list li { list-style: none; padding-left: 16px; position: relative; }
+.paradigm-list li::before { content: '•'; position: absolute; left: 0; color: #7b2ff7; }
+
+/* Section */
+section { margin-bottom: 3rem; }
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1.5rem;
+}
+.section-header .num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00d4ff, #7b2ff7);
+  font-weight: 900;
+  font-size: 0.9rem;
+}
+.section-header h2 {
+  font-size: 1.4rem;
+  color: #fff;
+}
+
+/* Chip anatomy */
+.anatomy {
+  background: linear-gradient(145deg, #111128, #1a1a3e);
+  border: 1px solid #2a2a5a;
+  border-radius: 16px;
+  padding: 2rem;
+}
+.anatomy-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+@media (max-width: 600px) { .anatomy-grid { grid-template-columns: 1fr; } }
+.anatomy-card {
+  background: rgba(0,0,0,0.3);
+  border-radius: 10px;
+  padding: 1.5rem;
+  border-left: 3px solid;
+}
+.anatomy-card.frozen { border-color: #ff4444; }
+.anatomy-card.mutable { border-color: #00ff88; }
+.anatomy-card.frozen h3 { color: #ff6666; margin-bottom: 0.3rem; }
+.anatomy-card.mutable h3 { color: #00ff88; margin-bottom: 0.3rem; }
+.anatomy-card .tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  margin-bottom: 0.8rem;
+  font-weight: 700;
+}
+.anatomy-card.frozen .tag { background: rgba(255,68,68,0.2); color: #ff6666; }
+.anatomy-card.mutable .tag { background: rgba(0,255,136,0.2); color: #00ff88; }
+.anatomy-card p { font-size: 0.85rem; color: #bbb; margin-bottom: 0.8rem; }
+.anatomy-card .code-snippet {
+  font-family: 'Cascadia Code', 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  background: #0a0a1a;
+  padding: 0.8rem;
+  border-radius: 6px;
+  border: 1px solid #333;
+  overflow-x: auto;
+  color: #aaa;
+}
+
+/* Flow diagram */
+.flow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1.5rem 0;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+.flow-step {
+  flex-shrink: 0;
+  background: linear-gradient(145deg, #1a1a3e, #16213e);
+  border: 1px solid #333366;
+  border-radius: 10px;
+  padding: 0.8rem 0.6rem;
+  text-align: center;
+  min-width: 110px;
+}
+.flow-step .step-icon { font-size: 1.5rem; margin-bottom: 0.3rem; }
+.flow-step .step-name { font-size: 0.75rem; font-weight: 700; color: #fff; }
+.flow-step .step-desc { font-size: 0.65rem; color: #888; margin-top: 2px; }
+.flow-arrow { color: #7b2ff7; font-size: 1.2rem; flex-shrink: 0; }
+
+/* Skill matrix */
+.skill-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+}
+.skill-table th {
+  background: linear-gradient(135deg, #1a1a3e, #2a1a4e);
+  padding: 10px 12px;
+  text-align: left;
+  color: #c0a0ff;
+  font-weight: 700;
+  border-bottom: 2px solid #7b2ff7;
+}
+.skill-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #222244;
+  color: #ccc;
+  vertical-align: top;
+}
+.skill-table tr:hover td { background: rgba(0,212,255,0.05); }
+.skill-table .cat { font-weight: 700; color: #00d4ff; white-space: nowrap; }
+.skill-table .level { font-size: 0.75rem; padding: 2px 6px; border-radius: 3px; }
+.skill-table .level.critical { background: #7b2ff7; color: #fff; }
+.skill-table .level.important { background: #00d4ff; color: #000; }
+.skill-table .level.helpful { background: #333; color: #aaa; }
+.skill-table .level.optional { background: #222; color: #666; }
+
+/* Trading Architecture */
+.trading-arch {
+  background: linear-gradient(145deg, #111128, #0a1a2e);
+  border: 1px solid #1a3a5a;
+  border-radius: 16px;
+  padding: 2rem;
+}
+.trading-layers {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.trading-layer {
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+}
+.layer-label {
+  min-width: 60px;
+  font-size: 0.7rem;
+  color: #00d4ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,212,255,0.1);
+  border-radius: 6px;
+  font-weight: 700;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+.layer-content {
+  flex: 1;
+  background: rgba(0,0,0,0.3);
+  border: 1px solid #2a3a5a;
+  border-radius: 10px;
+  padding: 1rem 1.2rem;
+}
+.layer-content h4 { color: #4499ff; margin-bottom: 0.3rem; font-size: 0.9rem; }
+.layer-content .lang-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 0.5rem; }
+.lang-tag {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-family: monospace;
+  font-weight: 700;
+}
+.lang-tag.python { background: #3776ab; color: #fff; }
+.lang-tag.cpp { background: #00599c; color: #fff; }
+.lang-tag.rust { background: #dea584; color: #000; }
+.lang-tag.ts { background: #3178c6; color: #fff; }
+.lang-tag.ffmpeg { background: #6a4a2a; color: #fff; }
+.lang-tag.sql { background: #f29111; color: #fff; }
+.lang-tag.tcl { background: #e7152a; color: #fff; }
+.lang-tag.bash { background: #4eaa25; color: #fff; }
+.layer-content .components { font-size: 0.8rem; color: #aaa; margin-top: 0.3rem; }
+
+/* Code examples */
+.code-block {
+  background: #0d0d20;
+  border: 1px solid #2a2a4a;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 1rem 0;
+}
+.code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 14px;
+  background: #1a1a2e;
+  border-bottom: 1px solid #2a2a4a;
+  font-size: 0.75rem;
+  color: #888;
+}
+.code-body {
+  padding: 1rem 1.2rem;
+  font-family: 'Cascadia Code', 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  overflow-x: auto;
+  white-space: pre;
+}
+.code-body .comment { color: #6a6a8a; }
+.code-body .keyword { color: #c678dd; }
+.code-body .string { color: #98c379; }
+.code-body .function { color: #61afef; }
+.code-body .type { color: #e5c07b; }
+.code-body .number { color: #d19a66; }
+.code-body .decorator { color: #e06c75; }
+.code-body .op { color: #56b6c2; }
+
+/* Environment setup */
+.env-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.env-card {
+  background: linear-gradient(145deg, #111128, #1a1a3e);
+  border: 1px solid #2a2a4a;
+  border-radius: 10px;
+  padding: 1.2rem;
+}
+.env-card h4 { color: #00d4ff; font-size: 0.9rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 6px; }
+.env-card p { font-size: 0.8rem; color: #aaa; }
+.env-card .env-icon { font-size: 1.2rem; }
+.env-card code {
+  display: block;
+  margin-top: 0.5rem;
+  padding: 0.6rem;
+  background: #0a0a1a;
+  border-radius: 5px;
+  font-family: monospace;
+  font-size: 0.72rem;
+  color: #00ff88;
+  border: 1px solid #1a1a3a;
+  overflow-x: auto;
+}
+
+/* Warning */
+.warning-box {
+  background: rgba(255,107,53,0.1);
+  border: 1px solid rgba(255,107,53,0.3);
+  border-radius: 10px;
+  padding: 1rem 1.2rem;
+  margin: 1rem 0;
+  font-size: 0.85rem;
+  color: #ffb07a;
+}
+.warning-box strong { color: #ff6b35; }
+
+/* Checklist */
+.checklist {
+  background: linear-gradient(145deg, #111128, #16213e);
+  border: 1px solid #2a2a4a;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+.checklist h3 { color: #00d4ff; margin-bottom: 1rem; font-size: 1rem; }
+.checklist-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid #1a1a3a;
+  font-size: 0.85rem;
+}
+.checklist-item:last-child { border-bottom: none; }
+.checklist-item .check-icon { color: #00ff88; font-size: 1rem; flex-shrink: 0; margin-top: 2px; }
+.checklist-item .check-text { color: #ccc; }
+.checklist-item .check-text strong { color: #fff; }
+
+/* Timeline for learning path */
+.learn-path {
+  position: relative;
+  padding-left: 30px;
+}
+.learn-path::before {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, #00d4ff, #7b2ff7, #ff6b35);
+}
+.learn-step {
+  position: relative;
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.2rem;
+  background: linear-gradient(145deg, #111128, #1a1a3e);
+  border: 1px solid #2a2a4a;
+  border-radius: 10px;
+}
+.learn-step::before {
+  content: '';
+  position: absolute;
+  left: -24px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #00d4ff;
+  border: 3px solid #0a0a1a;
+}
+.learn-step .learn-title { color: #fff; font-weight: 700; margin-bottom: 0.3rem; }
+.learn-step .learn-desc { font-size: 0.82rem; color: #aaa; }
+.learn-step .learn-duration {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 2px 8px;
+  background: rgba(123,47,247,0.2);
+  color: #c0a0ff;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>Taalas 芯片开发全景指南</h1>
+<p class="subtitle">从模型到硅片 → 从硅片到量化交易系统 · 全栈技术栈拆解</p>
+
+<!-- 范式转换 -->
+<div class="paradigm">
+  <h2>⚡ 核心认知：这不是传统 GPU 开发</h2>
+  <div class="paradigm-grid">
+    <div class="old-way">
+      <h4>❌ 传统 GPU 开发</h4>
+      <ul class="paradigm-list">
+        <li>写 C++/CUDA 核函数</li>
+        <li>手动优化内存搬运</li>
+        <li>调优张量核心利用率</li>
+        <li>模型换 → 改代码重编译</li>
+        <li>跑分 = 看吞吐/延迟</li>
+      </ul>
+    </div>
+    <div class="paradigm-arrow">→</div>
+    <div class="new-way">
+      <h4>✅ Taalas MSIC 开发</h4>
+      <ul class="paradigm-list">
+        <li>训练好模型 → 提交"固化"</li>
+        <li>无需写任何底层驱动</li>
+        <li>模型换 → 重新流片(约2个月)</li>
+        <li>微调/LoRA → 更新SRAM(瞬间)</li>
+        <li>核心价值 = 推理成本/延迟</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- 1. 芯片解剖 -->
+<section>
+  <div class="section-header">
+    <span class="num">1</span>
+    <h2>先理解芯片：你能改什么？不能改什么？</h2>
+  </div>
+  <div class="anatomy">
+    <div class="anatomy-grid">
+      <div class="anatomy-card frozen">
+        <h3>🔒 固化层 · Mask-ROM</h3>
+        <span class="tag">不可变 · BURNED-IN</span>
+        <p>模型权重被蚀刻在芯片的物理结构中。一旦流片完成，这一层就永久固定，无法通过软件修改。</p>
+        <div class="code-snippet">
+# 开发者不能在这里做任何事
+# 这里存放的是你提交的模型权重
+# 修改 = 重新流片 = 约2个月
+</div>
+      </div>
+      <div class="anatomy-card mutable">
+        <h3>🔓 可变层 · SRAM</h3>
+        <span class="tag">可编程 · RUNTIME</span>
+        <p>KV 缓存、LoRA 微调适配器、上下文窗口都存在这里。这才是开发者真正"编程"的地方。</p>
+        <div class="code-snippet">
+# 这里是你的游乐场：
+# 1. 注入 LoRA 微调参数
+# 2. 管理 KV Cache 策略
+# 3. 配置提示模板
+# 4. 设置输出约束
+</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. 开发流程 -->
+<section>
+  <div class="section-header">
+    <span class="num">2</span>
+    <h2>完整开发流程：从模型到交易系统</h2>
+  </div>
+
+  <div class="flow">
+    <div class="flow-step">
+      <div class="step-icon">🧠</div>
+      <div class="step-name">模型训练</div>
+      <div class="step-desc">PyTorch / JAX</div>
+    </div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">
+      <div class="step-icon">📐</div>
+      <div class="step-name">模型量化/精简</div>
+      <div class="step-desc">ONNX / GGUF</div>
+    </div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">
+      <div class="step-icon">🏭</div>
+      <div class="step-name">提交固化</div>
+      <div class="step-desc">Taalas 后端(约2月)</div>
+    </div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">
+      <div class="step-icon">🔧</div>
+      <div class="step-name">应用开发</div>
+      <div class="step-desc">Python / Rust / C++</div>
+    </div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-step">
+      <div class="step-icon">📈</div>
+      <div class="step-name">交易系统</div>
+      <div class="step-desc">部署到 Helios 机柜</div>
+    </div>
+  </div>
+
+  <div class="warning-box">
+    <strong>⚠️ 关键差异：</strong> 前四步（训练→固化）是"硬件部署"阶段，周期以月计。后两步是"软件部署"阶段，周期以天计。<br>
+    这意味着：<strong>你必须在流片前极度确信你的模型架构不会大变</strong>——但可以通过 LoRA 微调来适应市场变化。
+  </div>
+</section>
+
+<!-- 3. 技能矩阵 -->
+<section>
+  <div class="section-header">
+    <span class="num">3</span>
+    <h2>开发者技能矩阵：你需要掌握什么？</h2>
+  </div>
+
+  <table class="skill-table">
+    <thead>
+      <tr>
+        <th>类别</th>
+        <th>技能</th>
+        <th>重要性</th>
+        <th>用途</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="cat" rowspan="3">🧠 模型层</td>
+        <td><strong>Python + PyTorch</strong></td>
+        <td><span class="level critical">核心</span></td>
+        <td>训练/微调你的量化预测模型</td>
+      </tr>
+      <tr>
+        <td><strong>模型量化（INT8/INT4/GGUF）</strong></td>
+        <td><span class="level critical">核心</span></td>
+        <td>压缩模型以适配芯片参数量上限</td>
+      </tr>
+      <tr>
+        <td><strong>ONNX Runtime</strong></td>
+        <td><span class="level important">重要</span></td>
+        <td>模型标准化导出，作为固化格式</td>
+      </tr>
+      <tr>
+        <td class="cat" rowspan="2">⚡ 芯片接口层</td>
+        <td><strong>推理 API / gRPC</strong></td>
+        <td><span class="level critical">核心</span></td>
+        <td>调用固化芯片进行推理</td>
+      </tr>
+      <tr>
+        <td><strong>LoRA/PEFT 微调</strong></td>
+        <td><span class="level important">重要</span></td>
+        <td>在不重新流片的情况下适应新数据</td>
+      </tr>
+      <tr>
+        <td class="cat" rowspan="4">📊 数据层</td>
+        <td><strong>Python + pandas/numpy</strong></td>
+        <td><span class="level critical">核心</span></td>
+        <td>行情数据处理、特征工程</td>
+      </tr>
+      <tr>
+        <td><strong>时间序列数据库 (kdb+/DuckDB)</strong></td>
+        <td><span class="level important">重要</span></td>
+        <td>微秒级行情数据存取</td>
+      </tr>
+      <tr>
+        <td><strong>实时流处理 (Kafka/Flink)</strong></td>
+        <td><span class="level important">重要</span></td>
+        <td>市场行情数据流水线</td>
+      </tr>
+      <tr>
+        <td><strong>SQL / 数据建模</strong></td>
+        <td><span class="level helpful">辅助</span></td>
+        <td>回测数据管理</td>
+      </tr>
+      <tr>
+        <td class="cat" rowspan="3">🔧 交易系统层</td>
+        <td><strong>Rust</strong></td>
+        <td><span class="level critical">核心</span></td>
+        <td>低延迟执行引擎、内存安全</td>
+      </tr>
+      <tr>
+        <td><strong>C++ (C++20)</strong></td>
+        <td><span class="level important">重要</span></td>
+        <td>与芯片 SDK 的底层绑定、FPGA协同</td>
+      </tr>
+      <tr>
+        <td><strong>异步编程 (asyncio / Tokio)</strong></td>
+        <td><span class="level critical">核心</span></td>
+        <td>并发处理多市场行情 + 推理请求</td>
+      </tr>
+      <tr>
+        <td class="cat" rowspan="3">🌐 系统层</td>
+        <td><strong>Docker / K8s</strong></td>
+        <td><span class="level important">重要</span></td>
+        <td>部署到 Helios 机柜的容器化编排</td>
+      </tr>
+      <tr>
+        <td><strong>Linux 内核调优</strong></td>
+        <td><span class="level helpful">辅助</span></td>
+        <td>CPU 亲和性、网络优先级、内核旁路</td>
+      </tr>
+      <tr>
+        <td><strong>gRPC / Protobuf</strong></td>
+        <td><span class="level important">重要</span></td>
+        <td>GPU ↔ Taalas 芯片的异构通信</td>
+      </tr>
+      <tr>
+        <td class="cat" rowspan="2">📈 交易领域</td>
+        <td><strong>量化策略设计</strong></td>
+        <td><span class="level critical">核心</span></td>
+        <td>将 AI 预测转化为可执行的交易信号</td>
+      </tr>
+      <tr>
+        <td><strong>交易所 API (FIX/REST/WebSocket)</strong></td>
+        <td><span class="level critical">核心</span></td>
+        <td>报单、撤单、行情接收</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 4. 交易系统架构 -->
+<section>
+  <div class="section-header">
+    <span class="num">4</span>
+    <h2>量化交易系统架构：Taalas 在哪里？</h2>
+  </div>
+
+  <div class="trading-arch">
+    <div class="trading-layers">
+      <div class="trading-layer">
+        <div class="layer-label">L5</div>
+        <div class="layer-content">
+          <h4>📊 策略决策层</h4>
+          <div class="components">AI 预测 → 信号打分 → 仓位计算 → 风险控制 → 执行指令</div>
+          <div class="lang-tags">
+            <span class="lang-tag python">Python</span>
+            <span class="lang-tag rust">Rust</span>
+            <span class="lang-tag ts">TypeScript</span>
+          </div>
+        </div>
+      </div>
+      <div class="trading-layer">
+        <div class="layer-label">L4</div>
+        <div class="layer-content">
+          <h4>⚡ AI 推理层 ← Taalas 芯片在这里</h4>
+          <div class="components">Taalas MSIC (Token生成: 16,960 tok/s) + Instinct GPU (Prompt编码)</div>
+          <div class="lang-tags">
+            <span class="lang-tag cpp">C++ SDK</span>
+            <span class="lang-tag python">Python API</span>
+            <span class="lang-tag rust">Rust FFI</span>
+          </div>
+        </div>
+      </div>
+      <div class="trading-layer">
+        <div class="layer-label">L3</div>
+        <div class="layer-content">
+          <h4>🔄 特征工程层</h4>
+          <div class="components">实时特征计算 → 标准化 → 模型输入格式化</div>
+          <div class="lang-tags">
+            <span class="lang-tag python">Python</span>
+            <span class="lang-tag cpp">C++</span>
+          </div>
+        </div>
+      </div>
+      <div class="trading-layer">
+        <div class="layer-label">L2</div>
+        <div class="layer-content">
+          <h4>📡 行情数据层</h4>
+          <div class="components">交易所原始数据 → 清洗 → 时间对齐 → 特征数据库</div>
+          <div class="lang-tags">
+            <span class="lang-tag cpp">C++</span>
+            <span class="lang-tag rust">Rust</span>
+            <span class="lang-tag ffmpeg">kdb+</span>
+          </div>
+        </div>
+      </div>
+      <div class="trading-layer">
+        <div class="layer-label">L1</div>
+        <div class="layer-content">
+          <h4>🔌 执行接入层</h4>
+          <div class="components">交易所 FIX/REST/WebSocket → 网关 → 风控检查 → 报单</div>
+          <div class="lang-tags">
+            <span class="lang-tag rust">Rust</span>
+            <span class="lang-tag cpp">C++</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. 核心代码示例 -->
+<section>
+  <div class="section-header">
+    <span class="num">5</span>
+    <h2>核心代码：如何用 Python 调用 Taalas 芯片做交易推理</h2>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span>🐍 taalas_trading.py · 推理调用示例</span>
+      <span>Python 3.12</span>
+    </div>
+<div class="code-body"><span class="comment">"""
+基于 Taalas MSIC 的量化交易推理引擎
+- GPU 做 prompt 编码（灵活）
+- Taalas 芯片做 token 生成（极致速度）
+"""</span>
+
+<span class="keyword">import</span> asyncio
+<span class="keyword">from</span> dataclasses <span class="keyword">import</span> dataclass
+<span class="keyword">from</span> typing <span class="keyword">import</span> List, Optional
+<span class="keyword">import</span> <span class="type">taalas</span>.sdk <span class="keyword">as</span> <span class="type">tsdk</span>  <span class="comment"># 假设的芯片SDK</span>
+<span class="keyword">import</span> <span class="type">numpy</span> <span class="keyword">as</span> np
+
+<span class="keyword">class</span> <span class="type">TaalasTradingEngine</span>:
+    <span class="string">"""Taalas 芯片量化推理引擎"""</span>
+
+    <span class="keyword">def</span> <span class="function">__init__</span>(self, config: <span class="type">Dict</span>):
+        <span class="comment"># 1. 初始化芯片连接</span>
+        self.chip = tsdk.<span class="function">Chip</span>(
+            node_id=config[<span class="string">"chip_node_id"</span>],  <span class="comment"># Helios机柜中的Taalas节点</span>
+            model=<span class="string">"quant_v3_20b"</span>,           <span class="comment"># 已固化的模型名</span>
+            sram_size=<span class="number">8</span> * <span class="number">1024**3</span>,            <span class="comment"># 8GB SRAM for KV cache</span>
+        )
+        self.gpu = tsdk.<span class="function">InstinctBridge</span>(
+            node_id=config[<span class="string">"gpu_node_id"</span>]
+        )
+
+    <span class="keyword">async def</span> <span class="function">predict</span>(self, market_data: <span class="type">MarketSnapshot</span>) -&gt; <span class="type">TradingSignal</span>:
+        <span class="comment"># 2. 特征工程 → 构建 prompt</span>
+        prompt = self.<span class="function">_build_prompt</span>(market_data)
+
+        <span class="comment"># 3. GPU 处理 prompt 编码（灵活，可换模型）</span>
+        encoded = <span class="keyword">await</span> self.gpu.<span class="function">encode</span>(prompt)
+
+        <span class="comment"># 4. Taalas 芯片生成推理结果（16,960 tok/s）</span>
+        <span class="comment"># 这里几乎零延迟，因为权重已经在芯片里了</span>
+        result = <span class="keyword">await</span> self.chip.<span class="function">generate</span>(
+            encoded_state=encoded,
+            max_tokens=<span class="number">64</span>,
+            <span class="comment"># 注入 LoRA 微调（适应最新市场）</span>
+            lora_adapter=self.<span class="function">_get_market_lora</span>(market_data.timestamp),
+        )
+
+        <span class="comment"># 5. 解析交易信号</span>
+        <span class="keyword">return</span> self.<span class="function">_parse_signal</span>(result.text)
+
+    <span class="keyword">def</span> <span class="function">_get_market_lora</span>(self, timestamp) -&gt; <span class="type">LoRAAdapter</span>:
+        <span class="comment">"""
+        关键：LoRA 适配器存在 SRAM 中，运行时可热更新
+        这意味着模型"固化"了，但可以通过 LoRA 适应市场变化
+        """</span>
+        <span class="keyword">return</span> self.chip.sram.<span class="function">load_adapter</span>(
+            <span class="string">f"market_regime_{timestamp.date()}"</span>
+        )
+</div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <span>🦀 trading_execution.rs · Rust 执行层</span>
+      <span>Rust 2024</span>
+    </div>
+<div class="code-body"><span class="comment">//! 与 Taalas 芯片交互的低延迟执行引擎
+//! 为什么用 Rust：内存安全 + 零成本抽象 + async/await</span>
+
+<span class="keyword">use</span> tokio::sync::mpsc;
+<span class="keyword">use</span> serde::{Deserialize, Serialize};
+
+<span class="attribute">#[derive(Serialize, Deserialize)]</span>
+<span class="keyword">pub struct </span><span class="type">TaalasConfig</span> {
+    <span class="comment">// 芯片流片时烧录的模型版本</span>
+    <span class="keyword">pub </span>burned_model: <span class="type">String</span>,
+    <span class="comment">// SRAM 中可用的 LoRA 槽位数量</span>
+    <span class="keyword">pub </span>sram_lora_slots: <span class="type">usize</span>,
+    <span class="comment">// 推理超时（微秒）</span>
+    <span class="keyword">pub </span>timeout_us: <span class="type">u32</span>,
+}
+
+<span class="keyword">pub async fn</span> <span class="function">run_inference_loop</span>(
+    config: <span class="type">TaalasConfig</span>,
+    signals_rx: <span class="type">mpsc::Receiver&lt;MarketSignal&gt;</span>,
+) -&gt; <span class="type">Result&lt;()&gt;</span> {
+    <span class="comment">// 连接芯片 gRPC 端点</span>
+    <span class="keyword">let</span> client = <span class="type">TaalasClient</span>::<span class="function">connect</span>(
+        <span class="string">"unix:///var/run/taalas.sock"</span>,
+        config.burned_model,
+    ).<span class="function">await?</span>;
+
+    <span class="keyword">while let </span><span class="type">Some</span>(signal) = signals_rx.<span class="function">recv</span>().<span class="function">await</span> {
+        <span class="comment">// 1. 异步发送推理请求</span>
+        <span class="keyword">let</span> req = client.<span class="function">build_request</span>(
+            signal.features,
+            config.sram_lora_slots,  <span class="comment">// 选择SRAM中的LoRA</span>
+        );
+
+        <span class="comment">// 2. 等待推理结果（预期 &lt; 1ms，因为权重在硅片里）</span>
+        <span class="keyword">let</span> prediction = tokio::time::<span class="function">timeout</span>(
+            std::time::<span class="function">Duration</span>::<span class="function">from_micros</span>(config.timeout_us <span class="keyword">as</span> <span class="type">u64</span>),
+            client.<span class="function">predict</span>(req),
+        ).<span class="function">await</span>??;
+
+        <span class="comment">// 3. 转换为交易所订单</span>
+        <span class="keyword">let</span> order = <span class="function">signal_to_order</span>(prediction, &signal);
+        execution_tx.<span class="function">send</span>(order).<span class="function">await?</span>;
+    }
+    <span class="type">Ok</span>(())
+}
+</div>
+  </div>
+</section>
+
+<!-- 6. 开发环境 -->
+<section>
+  <div class="section-header">
+    <span class="num">6</span>
+    <h2>开发环境搭建清单</h2>
+  </div>
+
+  <div class="env-grid">
+    <div class="env-card">
+      <h4><span class="env-icon">🖥️</span> 本地开发机</h4>
+      <p>模型训练、回测、特征工程</p>
+      <code>
+Ubuntu 24.04 LTS<br>
+Python 3.12 + conda<br>
+PyTorch 2.x (CUDA)<br>
+80GB+ RAM / 1TB SSD<br>
+GPU: RTX 4090 / A100
+      </code>
+    </div>
+    <div class="env-card">
+      <h4><span class="env-icon">📦</span> 容器化工具链</h4>
+      <p>打包模型 + 部署镜像</p>
+      <code>
+Docker 24.x<br>
+NVIDIA Container Toolkit<br>
+Kubernetes 1.30+<br>
+Helm + Kustomize<br>
+gRPCurl (调试)
+      </code>
+    </div>
+    <div class="env-card">
+      <h4><span class="env-icon">⚡</span> 生产推理环境</h4>
+      <p>AMD Helios 机柜</p>
+      <code>
+Instinct MI350 GPU × N<br>
+Taalas MSIC 加速器 × N<br>
+EPYC 9005 CPU 集群<br>
+InfiniBand / RoCE 网络<br>
+SR-IOV + DPDK 内核旁路
+      </code>
+    </div>
+    <div class="env-card">
+      <h4><span class="env-icon">🛠️</span> 关键 SDK / 库</h4>
+      <p>与 Taalas 芯片交互</p>
+      <code>
+taalas-sdk (Python/C++/Rust)<br>
+amd-rocm 6.x (GPU驱动)<br>
+onnxruntime 1.19+<br>
+PEFT / HuggingFace TRL<br>
+NumPy / Polars / DuckDB
+      </code>
+    </div>
+    <div class="env-card">
+      <h4><span class="env-icon">📊</span> 行情数据栈</h4>
+      <p>微秒级实时行情</p>
+      <code>
+kdb+/q (时序数据库)<br>
+Apache Kafka (流处理)<br>
+Rust + Tokio (低延迟)<br>
+FIX Engine (交易所接入)<br>
+WebSocket Client
+      </code>
+    </div>
+    <div class="env-card">
+      <h4><span class="env-icon">🔬</span> 监控 & 调试</h4>
+      <p>芯片状态 + 交易性能</p>
+      <code>
+Prometheus + Grafana<br>
+eBPF (内核级跟踪)<br>
+Wireshark + tcpreplay<br>
+火焰图 / perf<br>
+自定义推理延迟追踪
+      </code>
+    </div>
+  </div>
+</section>
+
+<!-- 7. 学习路径 -->
+<section>
+  <div class="section-header">
+    <span class="num">7</span>
+    <h2>学习路径：从零基础到交易系统设计</h2>
+  </div>
+
+  <div class="learn-path">
+    <div class="learn-step">
+      <div class="learn-title">第 1 阶段：AI 模型基础</div>
+      <div class="learn-desc">
+        掌握 PyTorch → 训练一个简单的时序预测模型 → 理解 Transformer 架构 → 学会模型量化（INT8/INT4）。<br>
+        <strong>目标：</strong>能独立训练一个量化预测模型并导出为 ONNX。
+      </div>
+      <span class="learn-duration">⏱ 2-3 个月</span>
+    </div>
+    <div class="learn-step">
+      <div class="learn-title">第 2 阶段：模型优化 & 芯片适配</div>
+      <div class="learn-desc">
+        学习 PEFT/LoRA 微调 → 理解模型压缩（剪枝/蒸馏）→ 掌握 ONNX Runtime → 理解什么是"权重固化"和 MSIC。<br>
+        <strong>目标：</strong>能将模型压缩到芯片参数量上限内，并准备好"可固化"的模型文件。
+      </div>
+      <span class="learn-duration">⏱ 1-2 个月</span>
+    </div>
+    <div class="learn-step">
+      <div class="learn-title">第 3 阶段：Rust 系统编程</div>
+      <div class="learn-desc">
+        学习 Rust 基础 → async/await + Tokio → FFI 与 C 库互操作 → gRPC 服务开发。<br>
+        <strong>目标：</strong>能用 Rust 写一个低延迟推理客户端，与芯片通信。
+      </div>
+      <span class="learn-duration">⏱ 2-3 个月</span>
+    </div>
+    <div class="learn-step">
+      <div class="learn-title">第 4 阶段：量化交易系统</div>
+      <div class="learn-desc">
+        学习 K-line 数据处理 → 特征工程 → 回测框架 → 交易所 API (FIX/REST) → 订单管理 → 风险控制。<br>
+        <strong>目标：</strong>搭建一个从数据→推理→报单的完整交易系统。
+      </div>
+      <span class="learn-duration">⏱ 3-4 个月</span>
+    </div>
+    <div class="learn-step">
+      <div class="learn-title">第 5 阶段：生产部署 & 调优</div>
+      <div class="learn-desc">
+        Docker/K8s 容器化 → 网络内核旁路 (DPDK) → CPU 亲和性 → 推理延迟优化 → 监控告警。<br>
+        <strong>目标：</strong>将系统部署到 Helios 机柜，实现端到端微秒级延迟。
+      </div>
+      <span class="learn-duration">⏱ 2-3 个月</span>
+    </div>
+  </div>
+</section>
+
+<!-- 8. 核心清单 -->
+<section>
+  <div class="section-header">
+    <span class="num">8</span>
+    <h2>最终清单：你需要准备的工具链</h2>
+  </div>
+
+  <div class="checklist">
+    <h3>✅ 最小可用栈（MVP）</h3>
+    <div class="checklist-item">
+      <span class="check-icon">✓</span>
+      <span class="check-text"><strong>Python 3.12</strong> + PyTorch + ONNX Runtime → 模型训练与导出</span>
+    </div>
+    <div class="checklist-item">
+      <span class="check-icon">✓</span>
+      <span class="check-text"><strong>Rust</strong> + Tokio + gRPC → 低延迟推理客户端与执行引擎</span>
+    </div>
+    <div class="checklist-item">
+      <span class="check-icon">✓</span>
+      <span class="check-text"><strong>taalas-sdk</strong> (Python/C++) → 调用固化芯片进行推理</span>
+    </div>
+    <div class="checklist-item">
+      <span class="check-icon">✓</span>
+      <span class="check-text"><strong>PEFT / LoRA</strong> → 在不重新流片的情况下微调模型适应市场</span>
+    </div>
+    <div class="checklist-item">
+      <span class="check-icon">✓</span>
+      <span class="check-text"><strong>交易所 API</strong> (REST/WebSocket) → 行情接收与订单提交</span>
+    </div>
+    <div class="checklist-item">
+      <span class="check-icon">✓</span>
+      <span class="check-text"><strong>向量数据库 / 时序数据库</strong> → 存储历史行情与特征</span>
+    </div>
+  </div>
+
+  <div style="margin-top:1.5rem">
+  <div class="checklist" style="border-color:#7b2ff7;">
+    <h3 style="color:#c0a0ff;">🚀 进阶增强栈（HFT 级别）</h3>
+    <div class="checklist-item">
+      <span class="check-icon">➤</span>
+      <span class="check-text"><strong>C++20</strong> + kernel bypass (DPDK/Netmap) → 网络延迟压到纳秒级</span>
+    </div>
+    <div class="checklist-item">
+      <span class="check-icon">➤</span>
+      <span class="check-text"><strong>kdb+/q</strong> → 微秒级时序数据库，存储 PB 级 tick 数据</span>
+    </div>
+    <div class="checklist-item">
+      <span class="check-icon">➤</span>
+      <span class="check-text"><strong>FIX Protocol</strong> → 与交易所直接通信，绕过 API 层</span>
+    </div>
+    <div class="checklist-item">
+      <span class="check-icon">➤</span>
+      <span class="check-text"><strong>eBPF</strong> → 内核级性能追踪，分析每一微秒的开销</span>
+    </div>
+    <div class="checklist-item">
+      <span class="check-icon">➤</span>
+      <span class="check-text"><strong>Kubernetes + AMD ROCm</strong> → 生产环境部署与芯片编排</span>
+    </div>
+  </div>
+  </div>
+</section>
+
+<!-- 9. 关键策略：如何应对"固化"的约束 -->
+<section>
+  <div class="section-header">
+    <span class="num">9</span>
+    <h2>核心策略：如何在"固化芯片"上保持灵活？</h2>
+  </div>
+
+  <div class="anatomy">
+    <p style="color:#ccc;margin-bottom:1.5rem;">
+      芯片固化了主模型权重，但开发者有以下<strong style="color:#00ff88;">三层灵活性</strong>来应对市场变化：
+    </p>
+
+    <div class="anatomy-grid" style="grid-template-columns:1fr 1fr 1fr;">
+      <div class="anatomy-card mutable" style="border-color:#00ff88;">
+        <h3>🔓 第一层：SRAM LoRA</h3>
+        <span class="tag">毫秒级切换</span>
+        <p>在 SRAM 中预加载多个 LoRA 适配器，运行时按市场状态（牛市/熊市/震荡）热切换。相当于给同一个固化模型装"不同人格"。</p>
+      </div>
+      <div class="anatomy-card mutable" style="border-color:#00d4ff;">
+        <h3>🔓 第二层：提示工程</h3>
+        <span class="tag">零延迟切换</span>
+        <p>通过改变 prompt 模板和 system prompt，调整模型的行为模式。比如从"趋势跟踪"切到"均值回归"，只需要换 prompt。</p>
+      </div>
+      <div class="anatomy-card" style="border-color:#7b2ff7;">
+        <h3>🔓 第三层：两层金属重制</h3>
+        <span class="tag">约1个月</span>
+        <p>模型需要大变时，不需要从头流片——只需修改最后两层金属层。成本远低于训练新模型，速度远快于传统 ASIC。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<p style="text-align:center;color:#555;font-size:0.8rem;margin-top:2rem;">
+  数据来源：The Register · CNBC · AMD IR (2026.08) · 开发环境为基于现有技术的合理推断
+</p>
+
+</div>
+</body>
+</html>

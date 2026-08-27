@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AMD收购Taalas · AI推理芯片革命 科普动画</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: #0a0a1a;
+  color: #e0e0e0;
+  overflow-x: hidden;
+}
+
+/* Hero Section */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 2rem;
+}
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 50%, #1a1a3e 0%, #0a0a1a 70%);
+  z-index: 0;
+}
+.hero-particles {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.particle {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  background: #00d4ff;
+  border-radius: 50%;
+  animation: floatUp 6s infinite linear;
+  opacity: 0;
+}
+@keyframes floatUp {
+  0% { transform: translateY(100vh) scale(0); opacity: 0; }
+  10% { opacity: 0.8; }
+  90% { opacity: 0.3; }
+  100% { transform: translateY(-100px) scale(1); opacity: 0; }
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  max-width: 900px;
+}
+.hero-badge {
+  display: inline-block;
+  padding: 6px 20px;
+  border: 1px solid rgba(0,212,255,0.4);
+  border-radius: 20px;
+  font-size: 0.85rem;
+  color: #00d4ff;
+  letter-spacing: 2px;
+  margin-bottom: 2rem;
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 5px rgba(0,212,255,0.2); }
+  50% { box-shadow: 0 0 20px rgba(0,212,255,0.5); }
+}
+.hero h1 {
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 900;
+  background: linear-gradient(135deg, #00d4ff, #7b2ff7, #ff6b35);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 1.5rem;
+  line-height: 1.2;
+}
+.hero p {
+  font-size: 1.2rem;
+  color: #a0a0c0;
+  line-height: 1.8;
+  max-width: 700px;
+  margin: 0 auto;
+}
+.scroll-hint {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  animation: bounce 2s infinite;
+  color: #00d4ff;
+  font-size: 0.9rem;
+}
+@keyframes bounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-10px); }
+}
+
+/* Section Base */
+section {
+  padding: 6rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.section-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 1rem;
+  background: linear-gradient(90deg, #00d4ff, #7b2ff7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.section-subtitle {
+  text-align: center;
+  color: #8888aa;
+  margin-bottom: 4rem;
+  font-size: 1.1rem;
+}
+
+/* Comparison Section */
+.comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-bottom: 4rem;
+}
+.chip-card {
+  background: linear-gradient(145deg, #1a1a2e, #16213e);
+  border: 1px solid #2a2a4a;
+  border-radius: 16px;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.chip-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 40px rgba(0,212,255,0.15);
+}
+.chip-card.featured {
+  border-color: #7b2ff7;
+  box-shadow: 0 0 30px rgba(123,47,247,0.2);
+}
+.chip-card.featured::before {
+  content: '⚡ 革命性';
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 3px 10px;
+  background: #7b2ff7;
+  color: #fff;
+  font-size: 0.7rem;
+  border-radius: 8px;
+}
+.chip-card h3 {
+  font-size: 1.4rem;
+  margin-bottom: 0.5rem;
+  color: #fff;
+}
+.chip-card .chip-type {
+  font-size: 0.8rem;
+  color: #6666aa;
+  margin-bottom: 1.5rem;
+  letter-spacing: 1px;
+}
+
+/* Weight Storage Animation */
+.storage-viz {
+  height: 120px;
+  position: relative;
+  margin: 1rem 0;
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.weight-block {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  transition: all 0.5s ease;
+}
+
+/* Data flow arrow */
+.data-flow {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  background: #ff4444;
+  border-radius: 50%;
+  animation: flowRight 1.5s infinite linear;
+}
+@keyframes flowRight {
+  0% { left: -10px; top: 50%; opacity: 1; }
+  100% { left: 100%; top: 50%; opacity: 0; }
+}
+.data-flow-fast {
+  background: #00ff88;
+  animation: flowRight 0.3s infinite linear;
+}
+
+/* Speed Meter */
+.speed-meter {
+  margin-top: 1rem;
+}
+.speed-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #888;
+  margin-bottom: 4px;
+}
+.speed-bar-bg {
+  height: 8px;
+  background: #1a1a2e;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.speed-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  animation: fillBar 2s ease-out forwards;
+  width: 0;
+}
+@keyframes fillBar {
+  from { width: 0; }
+}
+.speed-bar-fill.nvidia { width: 5%; background: #4444aa; }
+.speed-bar-fill.groq { width: 25%; background: #44aaff; }
+.speed-bar-fill.cerebras { width: 50%; background: #ffaa44; }
+.speed-bar-fill.taalas { width: 98%; background: linear-gradient(90deg, #00d4ff, #7b2ff7); }
+
+.speed-number {
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-top: 0.5rem;
+}
+.speed-number.nvidia { color: #4444aa; }
+.speed-number.groq { color: #44aaff; }
+.speed-number.cerebras { color: #ffaa44; }
+.speed-number.taalas { color: #00ff88; text-shadow: 0 0 10px rgba(0,255,136,0.5); }
+
+/* Architecture Section */
+.arch-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: start;
+}
+@media (max-width: 768px) {
+  .arch-container { grid-template-columns: 1fr; }
+}
+.arch-diagram {
+  background: linear-gradient(145deg, #1a1a2e, #16213e);
+  border: 1px solid #2a2a4a;
+  border-radius: 16px;
+  padding: 2rem;
+  position: relative;
+}
+.arch-diagram h4 {
+  font-size: 1.1rem;
+  color: #00d4ff;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+.chip-visual {
+  width: 100%;
+  height: 280px;
+  position: relative;
+  background: #0a0a1a;
+  border: 2px solid #333366;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.chip-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  grid-template-rows: repeat(6, 1fr);
+  gap: 2px;
+  padding: 10px;
+  height: 100%;
+}
+.grid-cell {
+  border-radius: 3px;
+  position: relative;
+  overflow: hidden;
+}
+.grid-cell.weight {
+  background: #1a4a8a;
+  animation: cellGlow 2s infinite alternate;
+}
+.grid-cell.compute {
+  background: #2a6a2a;
+  animation: cellGlow 1s infinite alternate;
+}
+.grid-cell.hbm {
+  background: #8a2a2a;
+}
+.grid-cell.sram {
+  background: #6a4a2a;
+}
+.grid-cell.maskrom {
+  background: #4a2a8a;
+  animation: maskGlow 3s infinite alternate;
+}
+@keyframes cellGlow {
+  from { opacity: 0.5; }
+  to { opacity: 1; }
+}
+@keyframes maskGlow {
+  from { box-shadow: 0 0 3px rgba(123,47,247,0.3); }
+  to { box-shadow: 0 0 8px rgba(123,47,247,0.8); }
+}
+.chip-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 1rem;
+  font-size: 0.75rem;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+/* Token Race */
+.race-section {
+  margin-top: 4rem;
+}
+.race-track {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+.race-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.race-label {
+  width: 120px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: right;
+}
+.race-bar-container {
+  flex: 1;
+  height: 30px;
+  background: rgba(0,0,0,0.3);
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+.race-bar {
+  height: 100%;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  padding-left: 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+  animation: raceFill 3s ease-out forwards;
+  width: 0;
+  position: relative;
+}
+@keyframes raceFill {
+  from { width: 0; }
+}
+.race-bar.nvidia { background: linear-gradient(90deg, #3344aa, #4455cc); width: 2%; }
+.race-bar.groq { background: linear-gradient(90deg, #3388cc, #4499ee); width: 10%; }
+.race-bar.cerebras { background: linear-gradient(90deg, #cc8833, #ee9944); width: 20%; }
+.race-bar.taalas { background: linear-gradient(90deg, #00ccff, #7b2ff7); width: 95%; }
+
+.race-value {
+  width: 130px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+/* Scale Section */
+.scale-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  margin-top: 3rem;
+}
+@media (max-width: 768px) {
+  .scale-container { grid-template-columns: 1fr; }
+}
+.scale-card {
+  background: linear-gradient(145deg, #1a1a2e, #16213e);
+  border: 1px solid #2a2a4a;
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+}
+.scale-card .big-num {
+  font-size: 3rem;
+  font-weight: 900;
+  margin: 1rem 0;
+}
+.scale-card .big-num.purple { color: #7b2ff7; text-shadow: 0 0 20px rgba(123,47,247,0.4); }
+.scale-card .big-num.cyan { color: #00d4ff; text-shadow: 0 0 20px rgba(0,212,255,0.4); }
+.scale-card .big-num.orange { color: #ff6b35; text-shadow: 0 0 20px rgba(255,107,53,0.4); }
+.scale-card .label {
+  font-size: 0.9rem;
+  color: #8888aa;
+}
+
+/* Architecture Flow */
+.flow-section {
+  margin-top: 4rem;
+}
+.flow-diagram {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 2rem;
+  flex-wrap: wrap;
+}
+.flow-node {
+  background: linear-gradient(145deg, #1a1a2e, #16213e);
+  border: 1px solid #333366;
+  border-radius: 12px;
+  padding: 1.5rem 1.2rem;
+  text-align: center;
+  min-width: 150px;
+  transition: all 0.3s;
+}
+.flow-node:hover {
+  border-color: #00d4ff;
+  box-shadow: 0 0 20px rgba(0,212,255,0.2);
+  transform: translateY(-3px);
+}
+.flow-node.gpu { border-color: #44aaff; }
+.flow-node.taalas-node { border-color: #7b2ff7; background: linear-gradient(145deg, #1a1a3e, #2a1a4e); }
+.flow-arrow {
+  font-size: 1.5rem;
+  color: #00d4ff;
+  animation: arrowPulse 1.5s infinite;
+}
+@keyframes arrowPulse {
+  0%, 100% { opacity: 0.5; transform: translateX(0); }
+  50% { opacity: 1; transform: translateX(3px); }
+}
+.flow-node .icon { font-size: 2rem; margin-bottom: 0.5rem; }
+.flow-node .name { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.3rem; }
+.flow-node .desc { font-size: 0.75rem; color: #888; }
+
+/* Timeline */
+.timeline {
+  position: relative;
+  max-width: 800px;
+  margin: 3rem auto 0;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 20px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, #00d4ff, #7b2ff7, #ff6b35);
+}
+.timeline-item {
+  position: relative;
+  padding-left: 60px;
+  margin-bottom: 2rem;
+  animation: fadeInLeft 0.5s ease forwards;
+  opacity: 0;
+}
+@keyframes fadeInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.timeline-dot {
+  position: absolute;
+  left: 14px;
+  top: 5px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #00d4ff;
+  border: 3px solid #0a0a1a;
+  box-shadow: 0 0 10px rgba(0,212,255,0.5);
+}
+.timeline-date {
+  font-size: 0.8rem;
+  color: #00d4ff;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+.timeline-text {
+  font-size: 0.95rem;
+  color: #ccc;
+  line-height: 1.6;
+}
+
+/* Impact Section */
+.impact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 3rem;
+}
+.impact-card {
+  background: linear-gradient(145deg, #1a1a2e, #16213e);
+  border: 1px solid #2a2a4a;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border-left: 3px solid #7b2ff7;
+}
+.impact-card .impact-icon {
+  font-size: 1.8rem;
+  margin-bottom: 0.8rem;
+}
+.impact-card h4 {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  color: #fff;
+}
+.impact-card p {
+  font-size: 0.85rem;
+  color: #999;
+  line-height: 1.6;
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 3rem 2rem;
+  border-top: 1px solid #1a1a3a;
+  color: #555;
+  font-size: 0.85rem;
+}
+
+/* Token Animation */
+.token-stream {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+  max-height: 60px;
+  overflow: hidden;
+  font-family: monospace;
+  font-size: 0.75rem;
+}
+.token {
+  padding: 2px 6px;
+  background: rgba(123,47,247,0.2);
+  border: 1px solid rgba(123,47,247,0.4);
+  border-radius: 3px;
+  color: #c0a0ff;
+  animation: tokenFade 0.5s ease forwards;
+  opacity: 0;
+}
+@keyframes tokenFade {
+  to { opacity: 1; }
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-particles" id="particles"></div>
+  <div class="hero-content">
+    <span class="hero-badge">AMD × TAALES · 2026.08.06</span>
+    <h1>把AI模型<br>烧进硅片</h1>
+    <p>当所有公司都在比谁的GPU更快时，一家2023年成立于多伦多的初创公司选择了一条完全不同的路——放弃通用性，把模型权重永久蚀刻进芯片。速度提升48倍。这正是AMD花重金收购它的原因。</p>
+  </div>
+  <div class="scroll-hint">▼ 向下滑动，开始探索 ▼</div>
+</div>
+
+<!-- PROBLEM -->
+<section id="problem">
+  <h2 class="section-title">问题的本质</h2>
+  <p class="section-subtitle">为什么AI推理越来越贵？瓶颈在哪里？</p>
+  <div class="arch-diagram" style="max-width:600px;margin:0 auto;">
+    <h4>🖥️ 传统GPU推理流程</h4>
+    <div class="chip-visual">
+      <div style="display:grid;grid-template-columns:1fr 80px 1fr;gap:10px;padding:20px;height:100%;align-items:center;">
+        <div style="text-align:center;">
+          <div style="font-size:0.75rem;color:#ff6666;margin-bottom:5px;">HBM 内存</div>
+          <div id="hbm-blocks" style="display:grid;grid-template-columns:repeat(4,1fr);gap:3px;">
+          </div>
+        </div>
+        <div style="text-align:center;font-size:2rem;animation:arrowPulse 1s infinite;">⇄</div>
+        <div style="text-align:center;">
+          <div style="font-size:0.75rem;color:#66ff66;margin-bottom:5px;">计算单元</div>
+          <div id="compute-blocks" style="display:grid;grid-template-columns:repeat(4,1fr);gap:3px;">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:1.5rem;text-align:center;">
+      <p style="color:#ff8888;font-size:0.9rem;">⚠️ 每次计算都要从HBM读取权重 → 内存带宽成为瓶颈</p>
+      <p style="color:#888;font-size:0.8rem;margin-top:0.5rem;">这就是所谓的"内存墙"问题</p>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARISON -->
+<section>
+  <h2 class="section-title">四种技术路线</h2>
+  <p class="section-subtitle">同样是为了更快，每家公司选择了不同的方向</p>
+  <div class="comparison-grid">
+    <!-- Nvidia -->
+    <div class="chip-card">
+      <h3>🟦 Nvidia GPU</h3>
+      <div class="chip-type">通用并行计算 · 内存外置</div>
+      <div class="storage-viz">
+        <div style="position:absolute;top:10px;left:10px;width:30%;height:100%;background:rgba(255,50,50,0.15);border:1px solid #ff4444;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:#ff6666;">HBM</div>
+        <div style="position:absolute;top:10px;right:10px;width:30%;height:100%;background:rgba(50,200,50,0.15);border:1px solid #44ff44;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:#44ff44;">计算</div>
+        <div class="data-flow"></div>
+        <div class="data-flow" style="animation-delay:0.5s"></div>
+        <div class="data-flow" style="animation-delay:1s"></div>
+      </div>
+      <div class="speed-meter">
+        <div class="speed-label"><span>推理速度</span><span>1× (基准)</span></div>
+        <div class="speed-bar-bg"><div class="speed-bar-fill nvidia"></div></div>
+        <div class="speed-number nvidia">~350 tok/s</div>
+      </div>
+    </div>
+
+    <!-- Groq -->
+    <div class="chip-card">
+      <h3>🔵 Groq LPU</h3>
+      <div class="chip-type">数据流架构 · SRAM片上</div>
+      <div class="storage-viz">
+        <div style="position:absolute;top:10px;left:10px;width:45%;height:100%;background:rgba(100,50,200,0.15);border:1px solid #aa66ff;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:#aa66ff;">SRAM(权重)</div>
+        <div style="position:absolute;top:10px;right:10px;width:45%;height:100%;background:rgba(50,200,50,0.15);border:1px solid #44ff44;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:#44ff44;">计算</div>
+        <div class="data-flow" style="animation-duration:0.8s"></div>
+        <div class="data-flow" style="animation-delay:0.3s;animation-duration:0.8s"></div>
+      </div>
+      <div class="speed-meter">
+        <div class="speed-label"><span>推理速度</span><span>~10× GPU</span></div>
+        <div class="speed-bar-bg"><div class="speed-bar-fill groq"></div></div>
+        <div class="speed-number groq">~3,500 tok/s</div>
+      </div>
+    </div>
+
+    <!-- Cerebras -->
+    <div class="chip-card">
+      <h3>🟧 Cerebras WSE</h3>
+      <div class="chip-type">晶圆级单芯片 · SRAM全片</div>
+      <div class="storage-viz">
+        <div style="position:absolute;top:10px;left:10px;width:48%;height:100%;background:rgba(100,50,200,0.15);border:1px solid #aa66ff;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:#aa66ff;">SRAM(大)</div>
+        <div style="position:absolute;top:10px;right:10px;width:48%;height:100%;background:rgba(50,200,50,0.15);border:1px solid #44ff44;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:#44ff44;">计算(大)</div>
+        <div class="data-flow" style="animation-duration:0.5s"></div>
+        <div class="data-flow" style="animation-delay:0.2s;animation-duration:0.5s"></div>
+        <div class="data-flow" style="animation-delay:0.4s;animation-duration:0.5s"></div>
+      </div>
+      <div class="speed-meter">
+        <div class="speed-label"><span>推理速度</span><span>~19× GPU</span></div>
+        <div class="speed-bar-bg"><div class="speed-bar-fill cerebras"></div></div>
+        <div class="speed-number cerebras">~6,700 tok/s</div>
+      </div>
+    </div>
+
+    <!-- Taalas -->
+    <div class="chip-card featured">
+      <h3>🟪 Taalas MSIC</h3>
+      <div class="chip-type">掩膜固化 · 权重=电路</div>
+      <div class="storage-viz">
+        <div style="position:absolute;top:10px;left:10px;width:48%;height:100%;background:rgba(123,47,247,0.2);border:1px solid #7b2ff7;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:#c0a0ff;">Mask-ROM(固化)</div>
+        <div style="position:absolute;top:10px;right:10px;width:48%;height:100%;background:rgba(50,200,50,0.15);border:1px solid #44ff44;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:0.65rem;color:#44ff44;">计算(零延迟)</div>
+        <div class="data-flow data-flow-fast"></div>
+        <div class="data-flow data-flow-fast" style="animation-delay:0.1s"></div>
+        <div class="data-flow data-flow-fast" style="animation-delay:0.2s"></div>
+        <div class="data-flow data-flow-fast" style="animation-delay:0.3s"></div>
+        <div class="data-flow data-flow-fast" style="animation-delay:0.4s"></div>
+      </div>
+      <div class="speed-meter">
+        <div class="speed-label"><span>推理速度</span><span>48× GPU 🚀</span></div>
+        <div class="speed-bar-bg"><div class="speed-bar-fill taalas"></div></div>
+        <div class="speed-number taalas">16,960 tok/s</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TOKEN RACE -->
+<section>
+  <h2 class="section-title">速度竞赛</h2>
+  <p class="section-subtitle">同样跑 Llama 3.1 8B，差距有多大？</p>
+  <div class="race-track">
+    <div class="race-row">
+      <div class="race-label" style="color:#4455cc">Nvidia GPU</div>
+      <div class="race-bar-container">
+        <div class="race-bar nvidia"></div>
+      </div>
+      <div class="race-value" style="color:#4455cc">~350 tok/s</div>
+    </div>
+    <div class="race-row">
+      <div class="race-label" style="color:#4499ee">Groq LPU</div>
+      <div class="race-bar-container">
+        <div class="race-bar groq"></div>
+      </div>
+      <div class="race-value" style="color:#4499ee">~3,500 tok/s</div>
+    </div>
+    <div class="race-row">
+      <div class="race-label" style="color:#ee9944">Cerebras</div>
+      <div class="race-bar-container">
+        <div class="race-bar cerebras"></div>
+      </div>
+      <div class="race-value" style="color:#ee9944">~6,700 tok/s</div>
+    </div>
+    <div class="race-row">
+      <div class="race-label" style="color:#00ccff">Taalas HC1</div>
+      <div class="race-bar-container">
+        <div class="race-bar taalas"></div>
+      </div>
+      <div class="race-value" style="color:#00ff88">16,960 tok/s 🔥</div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW TAALES WORKS -->
+<section>
+  <h2 class="section-title">Taalas 怎么工作的？</h2>
+  <p class="section-subtitle">把"读内存"变成"读电路"——这就是魔法所在</p>
+
+  <div class="arch-container">
+    <!-- Traditional -->
+    <div class="arch-diagram">
+      <h4>❌ 传统方式：权重在外面的内存里</h4>
+      <div class="chip-visual">
+        <div style="display:grid;grid-template-columns:1fr 40px 1fr;gap:8px;padding:15px;height:100%;align-items:center;">
+          <div style="text-align:center;">
+            <div style="font-size:0.7rem;color:#ff6666;margin-bottom:8px;">HBM 外置内存</div>
+            <div id="trad-left" style="display:grid;grid-template-columns:repeat(5,1fr);gap:3px;"></div>
+          </div>
+          <div style="text-align:center;color:#ff8888;font-size:1.5rem;">
+            <span style="animation:arrowPulse 1s infinite;">⇄</span>
+            <div style="font-size:0.6rem;color:#888;margin-top:3px;">需要<br>读取</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:0.7rem;color:#66ff66;margin-bottom:8px;">计算单元</div>
+            <div id="trad-right" style="display:grid;grid-template-columns:repeat(5,1fr);gap:3px;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="chip-legend">
+        <span class="legend-item"><span class="legend-dot" style="background:#8a2a2a;"></span>HBM（慢）</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#2a6a2a;"></span>计算（快）</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#ff4444;"></span>⚠️ 瓶颈</span>
+      </div>
+      <p style="text-align:center;color:#ff8888;font-size:0.85rem;margin-top:1rem;">每次推理 = 反复读取内存，时间浪费在路上</p>
+    </div>
+
+    <!-- Taalas -->
+    <div class="arch-diagram" style="border-color:#7b2ff7;">
+      <h4 style="color:#c0a0ff;">✅ Taalas方式：权重=电路本身</h4>
+      <div class="chip-visual" style="border-color:#7b2ff7;">
+        <div style="display:grid;grid-template-columns:1fr 30px 1fr;gap:8px;padding:15px;height:100%;align-items:center;">
+          <div style="text-align:center;">
+            <div style="font-size:0.7rem;color:#c0a0ff;margin-bottom:8px;">Mask-ROM（固化权重）</div>
+            <div id="taalas-left" style="display:grid;grid-template-columns:repeat(5,1fr);gap:3px;"></div>
+          </div>
+          <div style="text-align:center;color:#00ff88;font-size:1.5rem;">
+            <span style="animation:arrowPulse 0.3s infinite;">⇄</span>
+            <div style="font-size:0.6rem;color:#888;margin-top:3px;">零<br>延迟</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:0.7rem;color:#66ff66;margin-bottom:8px;">计算 + SRAM缓存</div>
+            <div id="taalas-right" style="display:grid;grid-template-columns:repeat(5,1fr);gap:3px;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="chip-legend">
+        <span class="legend-item"><span class="legend-dot" style="background:#4a2a8a;"></span>Mask-ROM（权重固化）</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#6a4a2a;"></span>SRAM（KV缓存）</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#00ff88;"></span>✅ 无瓶颈</span>
+      </div>
+      <p style="text-align:center;color:#00ff88;font-size:0.85rem;margin-top:1rem;">权重就是电路——读取速度 = 光速，无需"搬运"</p>
+    </div>
+  </div>
+</section>
+
+<!-- SCALE UP -->
+<section>
+  <h2 class="section-title">如何扩展到超大模型？</h2>
+  <p class="section-subtitle">单片200亿参数？万亿级模型怎么跑？答案很简单：堆。</p>
+  <div class="scale-container">
+    <div class="scale-card">
+      <div class="label">HC2 单芯片参数量</div>
+      <div class="big-num purple">20B</div>
+      <div class="label">200亿参数 / 片</div>
+    </div>
+    <div class="scale-card">
+      <div class="label">万亿参数模型需要</div>
+      <div class="big-num cyan">50</div>
+      <div class="label">仅需 50 片加速器</div>
+    </div>
+    <div class="scale-card">
+      <div class="label">Nvidia LPX 方案需要</div>
+      <div class="big-num orange">2000+</div>
+      <div class="label">数十块GPU + 2000颗Groq LPU</div>
+    </div>
+  </div>
+</section>
+
+<!-- AMD ARCHITECTURE -->
+<section class="flow-section">
+  <h2 class="section-title">AMD 的全栈 AI 平台</h2>
+  <p class="section-subtitle">GPU 负责思考，Taalas 负责表达——各司其职</p>
+  <div class="flow-diagram">
+    <div class="flow-node">
+      <div class="icon">📝</div>
+      <div class="name">Prompt 输入</div>
+      <div class="desc">用户提问</div>
+    </div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-node gpu">
+      <div class="icon">🖥️</div>
+      <div class="name">Instinct GPU</div>
+      <div class="desc">处理 prompt 编码<br>（需要灵活性）</div>
+    </div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-node taalas-node">
+      <div class="icon">⚡</div>
+      <div class="name">Taalas 加速器</div>
+      <div class="desc">Token 生成<br>（需要极致速度）</div>
+    </div>
+    <span class="flow-arrow">→</span>
+    <div class="flow-node">
+      <div class="icon">💬</div>
+      <div class="name">用户收到回答</div>
+      <div class="desc">毫秒级响应</div>
+    </div>
+  </div>
+
+  <div style="margin-top:3rem;background:linear-gradient(145deg,#1a1a2e,#16213e);border:1px solid #2a2a4a;border-radius:12px;padding:2rem;">
+    <h4 style="color:#00d4ff;margin-bottom:1rem;">🔄 部署策略：Tick-Tock 模式</h4>
+    <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:center;">
+      <div style="flex:1;min-width:200px;">
+        <div style="font-weight:700;color:#44aaff;margin-bottom:0.5rem;">第一步 · Tick</div>
+        <div style="font-size:0.85rem;color:#999;line-height:1.6;">新模型先在 Instinct GPU 上验证。灵活、随时可换模型、快速迭代。</div>
+      </div>
+      <span class="flow-arrow">➡️</span>
+      <div style="flex:1;min-width:200px;">
+        <div style="font-weight:700;color:#c0a0ff;margin-bottom:0.5rem;">第二步 · Tock</div>
+        <div style="font-size:0.85rem;color:#999;line-height:1.6;">模型稳定后，"固化"到 Taalas 芯片。推理成本暴跌，延迟降至极致。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TIMELINE -->
+<section>
+  <h2 class="section-title">关键时间线</h2>
+  <p class="section-subtitle">从创业到被收购，Taalas 的故事</p>
+  <div class="timeline">
+    <div class="timeline-item" style="animation-delay:0.1s;">
+      <div class="timeline-dot"></div>
+      <div class="timeline-date">2023</div>
+      <div class="timeline-text"><strong>公司成立</strong> · CEO Ljubisa Bajic 在加拿大多伦多创立 Taalas</div>
+    </div>
+    <div class="timeline-item" style="animation-delay:0.3s;">
+      <div class="timeline-dot" style="background:#44aaff;"></div>
+      <div class="timeline-date">2024 ~ 2025</div>
+      <div class="timeline-text"><strong>累计融资 $219M</strong> · 专注开发掩膜ROM固化技术，用旧制程（6nm）做出突破性性能</div>
+    </div>
+    <div class="timeline-item" style="animation-delay:0.5s;">
+      <div class="timeline-dot" style="background:#ffaa44;"></div>
+      <div class="timeline-date">2026年2月</div>
+      <div class="timeline-text"><strong>HC1 测试芯片亮相</strong> · 跑 Llama 3.1 8B 达到 16,960 tok/s，轰动业界</div>
+    </div>
+    <div class="timeline-item" style="animation-delay:0.7s;">
+      <div class="timeline-dot" style="background:#7b2ff7;"></div>
+      <div class="timeline-date">2026年8月</div>
+      <div class="timeline-text"><strong>AMD 宣布收购</strong> · 与 Nvidia 花 $200亿收购 Groq 形成直接竞争</div>
+    </div>
+    <div class="timeline-item" style="animation-delay:0.9s;">
+      <div class="timeline-dot" style="background:#ff6b35;"></div>
+      <div class="timeline-date">2026年Q4（预计）</div>
+      <div class="timeline-text"><strong>交易完成</strong> · HC2（20B参数/片）即将发布，整合入 Helios 机柜系统</div>
+    </div>
+  </div>
+</section>
+
+<!-- IMPACT -->
+<section>
+  <h2 class="section-title">给行业带来的冲击</h2>
+  <p class="section-subtitle">这不只是又快了一倍的芯片——这是推理范式的改变</p>
+  <div class="impact-grid">
+    <div class="impact-card">
+      <div class="impact-icon">💸</div>
+      <h4>推理成本断崖下降</h4>
+      <p>如果 Token 成本比 GPU 低 10-20x，AI 服务定价将彻底改变。"AI Agent 无限思考"从奢望变为可能。</p>
+    </div>
+    <div class="impact-card">
+      <div class="impact-icon">🧠</div>
+      <h4>Test-Time Scaling 被解锁</h4>
+      <p>模型可以"想更久"再回答，大幅减少幻觉。之前因为成本太高而放弃的"慢思考"策略将重新流行。</p>
+    </div>
+    <div class="impact-card">
+      <div class="impact-icon">🔗</div>
+      <h4>软件硬件界限模糊</h4>
+      <p>"模型发布 = 芯片下单"——2个月将任何模型转化为硬件。模型和芯片进入协同进化时代。</p>
+    </div>
+    <div class="impact-card">
+      <div class="impact-icon">⚔️</div>
+      <h4>Nvidia 护城河被挑战</h4>
+      <p>Nvidia 押注 Groq（数据流、可换模型），AMD 押注 Taalas（固化、极致速度）。两种路线，谁赢未定。</p>
+    </div>
+    <div class="impact-card">
+      <div class="impact-icon">🏗️</div>
+      <h4>全栈系统成为战场</h4>
+      <p>单卖芯片的时代结束了。AMD 的 Helios 机柜 = CPU + GPU + Taalas + 网络，全面对标 Nvidia GB200。</p>
+    </div>
+    <div class="impact-card">
+      <div class="impact-icon">🎯</div>
+      <h4>推理市场加速分化</h4>
+      <p>训练用GPU，推理用MSIC——AI算力市场将分化为"通用灵活"和"专用极致"两条并行赛道。</p>
+    </div>
+  </div>
+</section>
+
+<!-- TAKEAWAY -->
+<section style="text-align:center;">
+  <div style="background:linear-gradient(135deg, #1a1a3e, #2a1a4e);border:2px solid #7b2ff7;border-radius:20px;padding:3rem;max-width:800px;margin:0 auto;position:relative;overflow:hidden;">
+    <div style="position:absolute;top:-50px;right:-50px;width:200px;height:200px;background:radial-gradient(circle,rgba(123,47,247,0.3),transparent);border-radius:50%;"></div>
+    <div style="position:absolute;bottom:-50px;left:-50px;width:200px;height:200px;background:radial-gradient(circle,rgba(0,212,255,0.2),transparent);border-radius:50%;"></div>
+    <div style="font-size:1.5rem;color:#00d4ff;margin-bottom:1rem;">💡 一句话总结</div>
+    <p style="font-size:1.3rem;color:#e0e0e0;line-height:1.8;position:relative;z-index:1;">
+      AMD 收购 Taalas，是在押注一个激进的方向——<br>
+      <strong style="color:#c0a0ff;">当 AI 模型从"快速迭代"走向"稳定部署"时，</strong><br>
+      <strong style="color:#00ff88;">把模型烧进芯片的极致效率路线，</strong><br>
+      将成为大规模推理的下一个战场。
+    </p>
+  </div>
+</section>
+
+<footer>
+  <p>数据来源：The Register · CNBC · AMD IR | 2026年8月6日报道整理</p>
+  <p style="margin-top:0.5rem;">AMD × Taalas Deep Dive Visualization</p>
+</footer>
+
+<script>
+// Particles
+const particlesContainer = document.getElementById('particles');
+for (let i = 0; i < 40; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  p.style.left = Math.random() * 100 + '%';
+  p.style.animationDelay = Math.random() * 6 + 's';
+  p.style.animationDuration = (4 + Math.random() * 4) + 's';
+  if (Math.random() > 0.5) p.style.background = '#7b2ff7';
+  particlesContainer.appendChild(p);
+}
+
+// HBM blocks
+const hbmBlocks = document.getElementById('hbm-blocks');
+for (let i = 0; i < 12; i++) {
+  const b = document.createElement('div');
+  b.style.cssText = 'height:14px;background:#4a1a1a;border-radius:2px;animation:cellGlow ' + (0.5 + Math.random()) + 's infinite alternate;';
+  hbmBlocks.appendChild(b);
+}
+
+const computeBlocks = document.getElementById('compute-blocks');
+for (let i = 0; i < 12; i++) {
+  const b = document.createElement('div');
+  b.style.cssText = 'height:14px;background:#1a4a1a;border-radius:2px;animation:cellGlow ' + (0.3 + Math.random() * 0.5) + 's infinite alternate;';
+  computeBlocks.appendChild(b);
+}
+
+// Traditional arch
+const tradLeft = document.getElementById('trad-left');
+for (let i = 0; i < 15; i++) {
+  const c = document.createElement('div');
+  c.className = 'grid-cell';
+  c.style.cssText = 'height:36px;background:#8a2a2a;border-radius:3px;animation:cellGlow 1s infinite alternate;';
+  tradLeft.appendChild(c);
+}
+const tradRight = document.getElementById('trad-right');
+for (let i = 0; i < 15; i++) {
+  const c = document.createElement('div');
+  c.className = 'grid-cell';
+  c.style.cssText = 'height:36px;background:#2a6a2a;border-radius:3px;animation:cellGlow 0.5s infinite alternate;';
+  tradRight.appendChild(c);
+}
+
+// Taalas arch
+const taalasLeft = document.getElementById('taalas-left');
+for (let i = 0; i < 15; i++) {
+  const c = document.createElement('div');
+  c.className = 'grid-cell';
+  c.style.cssText = 'height:36px;background:#4a2a8a;border-radius:3px;box-shadow:0 0 6px rgba(123,47,247,0.5);animation:maskGlow 3s infinite alternate;';
+  taalasLeft.appendChild(c);
+}
+const taalasRight = document.getElementById('taalas-right');
+for (let i = 0; i < 15; i++) {
+  const c = document.createElement('div');
+  c.className = 'grid-cell';
+  c.style.cssText = 'height:36px;background:' + (Math.random() > 0.5 ? '#6a4a2a' : '#2a6a2a') + ';border-radius:3px;animation:cellGlow 0.4s infinite alternate;';
+  taalasRight.appendChild(c);
+}
+
+// Intersection Observer for animations
+const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.style.opacity = '1';
+      entry.target.style.transform = 'translateX(0)';
+      // Re-trigger bar animations
+      entry.target.querySelectorAll('.speed-bar-fill, .race-bar').forEach(bar => {
+        bar.style.animation = 'none';
+        bar.offsetHeight; // trigger reflow
+        bar.style.animation = '';
+      });
+    }
+  });
+}, observerOptions);
+
+document.querySelectorAll('.chip-card, .scale-card, .impact-card, .timeline-item').forEach(el => {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(20px)';
+  el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+  observer.observe(el);
+});
+
+// Token stream animation for Taalas card
+setTimeout(() => {
+  const taalasCard = document.querySelector('.chip-card.featured');
+  if (taalasCard) {
+    const tokenDiv = document.createElement('div');
+    tokenDiv.className = 'token-stream';
+    tokenDiv.style.marginTop = '1rem';
+    const tokens = ['Hello', '我', '是', 'AI', '助手', '可以', '帮', '你', '写', '代码', '回答', '问题', '分析', '数据', '生成', '报告', '总结', '翻译'];
+    tokens.forEach((t, i) => {
+      setTimeout(() => {
+        const token = document.createElement('span');
+        token.className = 'token';
+        token.textContent = t;
+        tokenDiv.appendChild(token);
+      }, i * 30);
+    });
+    taalasCard.appendChild(tokenDiv);
+  }
+}, 2000);
+</script>
+</body>
+</html>
